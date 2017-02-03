@@ -60,7 +60,6 @@ def getFilenameQCD(n):
 if __name__== '__main__':
     
     
-    #f = ROOT.TFile.Open("dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/hinzmann/jobtmp_QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8_RunIISummer16MiniAODv2_PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8_RunIISummer16MiniAODv2_PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1-1/flatTuple.root")
     nEvents =0
     if options.filename !="":
         infile = openTxtFile(options.filename)

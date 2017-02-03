@@ -11,9 +11,9 @@ import array
 
 #set the tdr style
 tdrstyle.setTDRStyle()
-
+#gRoot.SetBatch(kTrue)
 #change the CMS_lumi variables (see CMS_lumi.py)
-CMS_lumi.lumi_13TeV = "36.4 fb^{-1}"
+CMS_lumi.lumi_13TeV = "36.8 fb^{-1}"
 CMS_lumi.writeExtraText = 1
 CMS_lumi.extraText = "Preliminary"
 CMS_lumi.lumi_sqrtS = "13 TeV" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
@@ -441,7 +441,7 @@ for h in histos:
 
    
    if dosave: 
-      canvasname = "/mnt/t3nfs01/data01/shome/dschafer/AnalysisOutput/figures/controlplots/qcdcp_"+h+".pdf"
+      canvasname = "/mnt/t3nfs01/data01/shome/dschafer/AnalysisOutput/figures/controlplots/Rereco/qcdcp_"+h+".pdf"
       canv.Print(canvasname,"pdf")
       canv.Print(canvasname.replace(".pdf",".root"),"root")
    time.sleep(dotime) 

@@ -57,8 +57,8 @@ if options.qV:
 
 filename1 = "QCD_HTbinned_"+channel+".root"
 filename2 = "QCD_HTbinned_"+channel+"_SB.root"
-filename1 = "QCD_madgraph_pythia8_"+channel+".root"
-filename2 = "QCD_madgraph_pythia8_"+channel+"_SB.root"
+filename1 = "QCD_madgraph_pythia8_"+channel+"_summer16.root"
+filename2 = "QCD_madgraph_pythia8_"+channel+"_summer16_SB.root"
 
 if options.herwig:
   filename1 = "QCD_herwig_"+channel+".root"
@@ -67,26 +67,29 @@ if options.ptBinned:
   filename1 = "QCD_pythia8_"+channel+".root"
   filename2 = "QCD_pythia8_"+channel+"_SB_test40GeV.root"
   filename1 = "QCD_pythia8_"+channel+"_summer16.root"
-  filename2 = "QCD_pythia8_"+channel+"_summer16_SB_test2.root"
+  filename2 = "QCD_pythia8_"+channel+"_summer16_SB.root"
   #QCD_pythia8_qV_SB_test40GeV.root
 filetmpSR = TFile.Open(path+filename1,"READ")
 filetmpSB = TFile.Open(path+filename2,"READ")
 
 
-  
+y = 2
+if options.qV:
+    y=10
 
 markerStyle = [20,24,22,26,33,27,20]
 
-fBins =[1000, 1055, 1118, 1181, 1246, 1313, 1383, 1455, 1530, 1607, 1687, 1770, 1856, 1945, 2037, 2132, 2231, 2332, 2438, 2546, 2659, 2775, 2895, 3019, 3147, 3279, 3416, 3558, 3704, 3854, 4010]
+fBins =[1000, 1058, 1118, 1181, 1246, 1313, 1383, 1455, 1530, 1607, 1687, 1770, 1856, 1945, 2037, 2132, 2231, 2332, 2438, 2546, 2659, 2775, 2895, 3019, 3147, 3279, 3416, 3558, 3704, 3854, 4010]
 
 # fBins = [x*200 for x in range(5, 20)]
          
 mg =  []
 #histos = ["DijetMassHighPuriqV","DijetMassLowPuriqV","DijetMassHighPuriWW","DijetMassLowPuriWW","DijetMassHighPuriZZ","DijetMassLowPuriZZ"]
 histos = ["DijetMassHighPuriWW","DijetMassLowPuriWW","DijetMassHighPuriZZ","DijetMassLowPuriZZ"]
-histos = ["DijetMassHighPuriqV","DijetMassLowPuriqV"]
 legend = ["WW HP","WW LP","ZZ HP","ZZ LP"]
-legend = ["qV HP","qV LP"]
+if options.qV:
+    histos = ["DijetMassHighPuriqV","DijetMassLowPuriqV"]
+    legend = ["qV HP","qV LP"]
 
 l = TLegend(0.7801508,0.7215026,0.9296482,0.9093264)
 l.SetTextSize(0.033)
@@ -115,14 +118,14 @@ addInfo.AddText("M_{jj} > 1.055 TeV")
 
 i = -1 
 for h in histos:
-  fBins = [1000, 1200, 1400, 1600, 1900, 2200, 2500, 3000, 3650]
+  fBins = [1055, 1200, 1400, 1600, 1900, 2200, 2500, 3000, 3650]
   massBins = array('d',fBins)
   if h.find("HighPuriWW") != -1 or h.find("HighPuriZZ") != -1:
-    fBins = [1000, 1200, 1400, 1600, 2000, 2500, 3000, 3650]
+    fBins = [1055, 1200, 1400, 1600, 2000, 2500, 3000, 3650]
     massBins = array('d',fBins)   
   if h.find("HighPuriqV") != -1 or h.find("LowPuriqV") != -1:
-    fBins = [1000, 1200, 1400, 1600, 2000, 2500, 3000, 3650,4300,5000,6000,6500]
-    massBins = array('d',fBins)
+    fBins = [1055, 1200, 1400, 1600, 2000, 2500, 3000, 3650,4300,5000,6000,6500]
+  massBins = array('d',fBins)
   i +=1 
   dentmp = TH1F(filetmpSB.Get(h))
   numtmp = TH1F(filetmpSR.Get(h))
@@ -199,9 +202,9 @@ for h in histos:
 
 canvas = TCanvas("c","c",W,H)
 mg[0].SetMinimum(-0.5)
-mg[0].SetMaximum(2)
-mg[0].GetXaxis().SetLimits(1000.,6600.)
-mg[0].GetXaxis().SetRangeUser(1000.,6600.)
+mg[0].SetMaximum(y)
+mg[0].GetXaxis().SetLimits(1058.,6600.)
+mg[0].GetXaxis().SetRangeUser(1058.,6600.)
 mg[0].Draw("E0P")
 mg[0].GetXaxis().SetTitleSize(0.06)
 mg[0].GetXaxis().SetTitleOffset(0.95)
@@ -218,8 +221,8 @@ CMS_lumi.CMS_lumi(canvas, iPeriod, iPos)
 SetOwnership( l, 1 )
 l.Draw()
 addInfo.Draw("same")
-mg[0].GetXaxis().SetLimits(1055.,6600.)
-mg[0].GetXaxis().SetRangeUser(1055.,6600.)
+mg[0].GetXaxis().SetLimits(1058.,6600.)
+mg[0].GetXaxis().SetRangeUser(1058.,6600.)
 canvas.Update()
 cname = "../AnalysisOutput/figures/MjjSRvsSB_pythia8Madgraph_"+channel+".pdf"
 if options.herwig:
@@ -229,4 +232,4 @@ if options.ptBinned:
 canvas.SaveAs(cname)
 canvas.SaveAs(cname.replace("pdf","root"),"root")
 canvas.SaveAs(cname.replace("pdf","C"),"C")
-time.sleep(100)
+time.sleep(10)
