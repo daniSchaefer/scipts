@@ -23,7 +23,7 @@ fillStyle = [3018  ,3002  ,3005, 3003,1001 ,1001,1001,1001 ,1001,1001,1001 ,1001
 lineColor = [1,210,2,4,kPink,kAzure+8,kPink-7,8,9]
 lineStyle = [1,1,1,1,2,2,2,2]
 markerStyles = [20,22,26,31,32,33,34,35,36]
-
+lumi = 36814.
 
 iPos = 0
 if( iPos==0 ): CMS_lumi.relPosX = 0.12
@@ -64,37 +64,9 @@ def sigMass(filename):
     s2 = s[2].split("GeV")
     return s2[0]
 
-def getMaxPunzi(hsig,hbkg,denSIG,denBKG):
-    testcuts =[]
-    c = 0
-    for i in range(1,100):
-        c = 0 + i/100.
-        testcuts.append(c)
-    #print testcuts
-    #testcuts = [0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85]
-    punzi=[]
-    for cut in testcuts:
-        numBKG = hbkg.Integral(0,hbkg.FindBin(cut))
-        eb = numBKG/denBKG   
-        numSIG = hsig.Integral(0,hsig.FindBin(cut))
-        es = numSIG/denSIG
-        ps = es/(1+math.sqrt(numBKG))
-        punzi.append(ps)
-        
-    apunzi = array('d',punzi)
-    atestcuts = array('d',testcuts)
-    
-    max_value = max(punzi)
-    max_index = punzi.index(max_value)
-    max_cut = testcuts[max_index]
-    #print max_index
-    #print max_value
-    #print max_cut
-    result =[max_value,max_cut]
-    return result
 
 
-def getMaxPunzi2(fsig,fbkg,massup,massdown):
+def getPunzi2(fsig,fbkg,massup,massdown,category):
     testcuts =[]
     c = 0
     testcuts.append(100)
@@ -102,34 +74,48 @@ def getMaxPunzi2(fsig,fbkg,massup,massdown):
         c = 0 + i/100.
         testcuts.append(c*100)
     punzi=[]
-    print testcuts
-    ressig = getNevents(fsig, testcuts, massup, massdown,"VV")
-    resbkg = getNevents(fsig, testcuts, massup, massdown,"VV")
+    #print testcuts
+    ressig = getNevents(fsig, testcuts, massup, massdown,category)
+    resbkg = getNevents(fbkg, testcuts, massup, massdown,category)
     denBKG = resbkg[0]
     denSIG = ressig[0]
     es = []
     for s in range(1,len(ressig)):
         es = ressig[s]/denSIG
         eb = resbkg[s]/denBKG
-        ps = es/(1+math.sqrt(resbkg[s]))
+        ps = es/(1+math.sqrt(resbkg[s]*lumi))
         punzi.append(ps)
+        #print "cut : "+str(testcuts[s])+" punzi: "+str(ps)
     
         
     apunzi = array('d',punzi)
     atestcuts = array('d',testcuts)
     
+    c = TCanvas("c","c",400,400)
+    g = TGraph(len(apunzi),atestcuts, apunzi)
+    g.Draw("ALP")
+    c.SaveAs("PunziOverCut_M"+str(int(massup*(1/1.2)))+"_"+cat+".pdf")
+    #time.sleep(20)
+    
     max_value = max(punzi)
     max_index = punzi.index(max_value)
     max_cut = testcuts[max_index]*0.01
+    
+    dict_res = {}
+    for index in range(1,len(testcuts)):
+        dict_res[int(testcuts[index])] = punzi[index-1]
+        #print int(testcuts[index])
+    dict_res['maxcut'] = max_cut
+    dict_res['maxvalue']= max_value
     #print max_index
     #print max_value
     #print max_cut
     result =[max_value,max_cut]
-    return result
+    return dict_res
     
         
 
-def getPunziGraphs(masses,sigfilelist,filenames , hnameb, hnames, lumi, fbkg,outdir,rebin):
+def getPunziGraphs(category, masses,sigfilelist,filenames , lumi, fbkg,outdir,rebin):
     histos = []
     ii = 0
     maxmass = array('d',[])
@@ -165,67 +151,50 @@ def getPunziGraphs(masses,sigfilelist,filenames , hnameb, hnames, lumi, fbkg,out
     cut035punzi = array('d',[])
 
     for file in sigfilelist:
-        print "test if right histos are taken for mass region:"
-        key = sigMass(filenames[ii])
-        print key
-        if key in hnameb:
-            print 'BKG hist == %s' %hnameb[key]
-        else:
-            ii+=1
-            continue
-        hbkg = fbkg.Get(hnameb[key])
-        hbkg.Scale(lumi)
-        print "Integral after scaling = %f" %hbkg.Integral()
-        print 'Signal file == %s' %file.GetName()
         m = masses[ii]
         mass = m*1000
         print 'Mass set to %i' %mass
-        hsig = file.Get(hnameb[key])
-        histos.append(hsig)
         punzi = array('d',[])
         cuts = array('d',[])
         ES = array('d',[])
         B = array('d',[])
         i = 0
         
-        #ListOfAllcuts = [100,75,60,50,55,45,40,35,30]
-        #resBkg = getNevents(fbkg,ListOfAllcuts, mass*1.2 , mass*0.8,"VV")
-        #resSig = getNevents(file,ListOfAllcuts, mass*1.2 , mass*0.8,"VV")
-        #print resSig
-        #print resBkg
-        #denBKG = resBkg[0]*lumi
-        #denSIG = resSig[0]
-        denBKG = hbkg.Integral()
-        print "ALL BKG = %f" %denBKG
-        denSIG = hsig.Integral()
-        print "ALL SIG = %f" %denSIG
-        #r = getMaxPunzi2(file,fbkg,mass*1.2,mass*0.8)
-        r = getMaxPunzi(hsig,hbkg,denSIG,denBKG)
-        maxpunzi.append(r[0])
-        maxcuts.append(r[1])
-        maxcutsup.append(r[1]*1.1)
-        maxcutsdown.append(r[1]*0.9)
+        r = getPunzi2(file,fbkg,mass*1.2,mass*0.8,category)
+        maxpunzi.append(r['maxvalue'])
+        maxcuts.append(r['maxcut'])
+        maxcutsup.append(r['maxcut']*1.1)
+        maxcutsdown.append(r['maxcut']*0.9)
         maxmass.append(mass)
+        
+        ListOfAllcuts = [100,75,60,50,55,45,40,35,30]
+        
+        
+        
+        #denBKG = resBkg[0]
+        #denSIG = resSig[0]
+        #print "ALL BKG = %f" %(denBKG*lumi)
+        #print "ALL SIG = %f" %denSIG
         print "====================="
         print maxcuts
         print maxmass
         print "====================="
         ii+=1
         ListOfcuts = [75,60,50,55,45,40,35,30]
-        ind = 1
+        ind = 0
         for x in ListOfcuts:
-            #numBKG = resBkg[ind]*lumi
-            #umSIG = resSig[ind]
+            ind +=1
+            #numBKG = resBkg[ind]
+            #numSIG = resSig[ind]
+            ps = r[x]
             cut = x/100.
-            numBKG = hbkg.Integral(0,hbkg.FindBin(cut))
-            eb = numBKG/denBKG   
-            numSIG = hsig.Integral(0,hsig.FindBin(cut))
-            es = numSIG/denSIG
-            ps = es/(1+math.sqrt(numBKG))
-            punzi.append(ps)
-            cuts.append(cut)
-            ES.append(es)
-            B.append(numBKG)
+            #eb = numBKG/denBKG   
+            #es = numSIG/denSIG
+            #ps = es/(1+math.sqrt(numBKG))
+            #punzi.append(ps)
+            #cuts.append(cut)
+            #ES.append(es)
+            #B.append(numBKG)
             if (x==75):
                 cut075punzi.append(ps)  
                 cut075.append(cut)
@@ -250,35 +219,13 @@ def getPunziGraphs(masses,sigfilelist,filenames , hnameb, hnames, lumi, fbkg,out
             if (x==35):
                 cut035punzi.append(ps)  
                 cut035.append(cut)  
-            print " Cut = %0.2f"%cut
-            print "Signal numerator: %i" %numSIG
-            print "Signal denominator: %i" %denSIG
-            print "Signal efficiency: %0.3f" %(es)
-            print "Total background: %i" %(numBKG)
-            print "PUNZI: %f" %(ps)
-            print "---------------------------"
-            ind +=1
-        del hbkg
-        del hsig
-        #tmp = punzi[0]
-        #index = 0
-        #for p in range(0,len(punzi)):
-            #print'%0.2f %f %f %i' %(cuts[p],punzi[p],ES[p],B[p])  
-            #if punzi[p] > tmp:
-                #index = p
-                #tmp = punzi[p]   
-
-        #print "Max significance"
-        #print'%0.2f %f %f %i' %(cuts[index],punzi[index],ES[index],B[index])  
-        #print "######################"
-        #maxpunzi.append(punzi[index])
-        #maxcuts.append(cuts[index])
-        #maxcutsup.append(cuts[index]*(1.1))
-        #maxcutsdown.append(cuts[index]*(0.9))
-        #maxmass.append(m)
-        #maxes.append(ES[index])
-        #maxB.append(B[index])
-        #ii += 1
+            #print " Cut = %0.2f"%cut
+            #print "Signal numerator: %i" %(numSIG*lumi)
+            #print "Signal denominator: %i" %(denSIG*lumi)
+            #print "Signal efficiency: %0.3f" %(es)
+            #print "Total background: %i" %(numBKG*lumi)
+            #print "PUNZI: %f" %(ps)
+            #print "---------------------------"
 
         del punzi[:]
         del cuts[:]
@@ -312,8 +259,9 @@ def getPunziGraphs(masses,sigfilelist,filenames , hnameb, hnames, lumi, fbkg,out
         cut035punziRatio.append(cut035punzi[i]/maxpunzi[i])
   
   
-  
-
+    print "maxpunzi: ===================================================="
+    print maxpunzi
+    print "============================================================="
 
     l1 = TLatex()
     l1.SetNDC()
@@ -398,7 +346,8 @@ def getPunziGraphs(masses,sigfilelist,filenames , hnameb, hnames, lumi, fbkg,out
     g2.GetXaxis().SetTitle('M_{X} (TeV)')
     # g2.GetYaxis().SetTitle("#epsilon_{S}/(1+#sqrt{B})")
     g2.GetYaxis().SetTitle("Sign / Sign_{Opt. cut}")
-    g2.GetYaxis().SetRangeUser(0.5,1.5)
+    g2.GetYaxis().SetRangeUser(0.0,1.5)
+    #g2.SetNdivisions(4)
     g2.SetMarkerColor(col.GetColor(palette[0]))
     g3.SetMarkerColor(col.GetColor(palette[1]))
     g4.SetMarkerColor(col.GetColor(palette[2]))
@@ -460,56 +409,11 @@ def getPunziGraphs(masses,sigfilelist,filenames , hnameb, hnames, lumi, fbkg,out
     l.SetTextSize(0.035)
 
 
-    c = TCanvas("c", "",800,800)
-    c.cd()
-
-    hbkg = fbkg.Get(hnames)
-    hbkg.Scale(lumi)
-    hbkg.GetXaxis().SetTitle('#tau_{21}')
-    hbkg.GetYaxis().SetTitle("Events")
-    hbkg.Rebin(rebin)
-    hbkg.SetFillStyle(3002)
-    hbkg.SetFillColor(kBlack)
-    hbkg.SetLineColor(kBlack)
-    hbkg.GetXaxis().SetRangeUser(0.,1.)
-    hbkg.SetMaximum(1.7*hbkg.GetMaximum())
-    hbkg.Draw("HIST")
-    l.AddEntry(hbkg,"QCD","f")
-    k = 0
-    for h in histos:
-        h.Rebin(rebin)
-        h.GetXaxis().SetRangeUser(0.,2.5);
-        h.SetLineColor(col.GetColor(palette[k %4]))
-        h.SetLineStyle(lineStyle[k])
-        h.SetLineWidth(2)
-        sf = 1E7
-        sf = hbkg.Integral()/h.Integral()
-        h.Scale(sf)
-        h.Draw("sameHIST")
-        # l.AddEntry(h,"RS G (%i TeV)#rightarrow ZZ (norm)" %(masses[k]),"l")
-        if not (Signal=="Wprime" or Signal=="Zprime"):l.AddEntry(h,"G_{%s}(%.1f TeV)#rightarrow WW"%(Signal,masses[k]),"l")
-        if Signal=="Wprime":l.AddEntry(h,"W'(%.1f TeV)#rightarrow WZ"%(masses[k]),"l")
-        if Signal=="Zprime":l.AddEntry(h,"Z'(%.1f TeV)#rightarrow WW"%(masses[k]),"l")
-        # l.AddEntry(histos[1],"RS1 G #rightarrow WW (norm)","l")
-        # l.AddEntry(histos[2],"RS1 G #rightarrow ZZ (norm)","l")
-        # l.AddEntry(histos[3],"q* (%i TeV)#rightarrow qZ (norm)" %(masses[1]),"l")
-        # l.AddEntry(histos[9],"q*#rightarrow qW","l")
-        k += 1
-    l.SetFillColor(0)
-    l.Draw()  
-    l1.DrawLatex(0.2,0.89, "0.85 #times M_{X} < M_{jj} < 1.15 #times M_{X}")
-    l1.DrawLatex(0.2,0.84, "65 GeV < M_{p} < 105 GeV")
-    CMS_lumi.CMS_lumi(c, iPeriod, iPos)
-    c.Update()
-
-    canvasname =outdir+Signal+"WW.pdf"
-    print "saving to Canvas  %s" %canvasname
-    c.Print(canvasname,"pdf")
-    c.Print(canvasname.replace("pdf","root"),"root")
-    canvasname =outdir+Signal+"WWPunzi.pdf"
+   
+    canvasname =outdir+Signal+"WWPunzi_"+category+".pdf"
     c2.Print(canvasname,"pdf")
     c2.Print(canvasname.replace("pdf","root"),"root")
-    canvasname =outdir+Signal+"WWSignvsM.pdf"
+    canvasname =outdir+Signal+"WWSignvsM_"+category+".pdf"
     c3.Print(canvasname,"pdf")
     c3.Print(canvasname.replace("pdf","root"),"root")
     #sys.stdout = orig_stdout
@@ -549,6 +453,7 @@ def plotMaxPunzi(maxpunzi, masses):
 def getNevents(tfile, cutup, massup, massdown, category):
     tree = tfile.Get('tree')
     n = []
+    LPcut =0.75
     for cut in cutup:
         n.append(0)
     groomedmassdown = 65.
@@ -571,11 +476,23 @@ def getNevents(tfile, cutup, massup, massdown, category):
             for cut in cutup:
                 #print cut*0.01
                 x = cut*0.01
-                if (event.jet_puppi_tau2tau1_jet2 <= x) and (event.jet_puppi_tau2tau1_jet1 <= x):
-                    n[i]+= event.weight
-                    #print event.jet_puppi_tau2tau1_jet1
-                    #print event.jet_puppi_tau2tau1_jet2
+                if category.find("HP")!=-1:
+                    if (event.jet_puppi_tau2tau1_jet2 <= x) and (event.jet_puppi_tau2tau1_jet1 <= x):
+                        n[i]+= event.weight
+                        #print event.jet_puppi_tau2tau1_jet1
+                        #print event.jet_puppi_tau2tau1_jet2
+                else:
+                    if x >= 0.75:
+                       if x == 1.:
+                           n[i]+=event.weight
+                       else:
+                           continue
+                    else:
+                        if ((event.jet_puppi_tau2tau1_jet2 <= x) and (x < event.jet_puppi_tau2tau1_jet1 <= LPcut)) or ((event.jet_puppi_tau2tau1_jet1 <= x) and (x < event.jet_puppi_tau2tau1_jet2 <= LPcut)):
+                            n[i]+= event.weight
+                    
                 i+=1
+
     return n
 
 
@@ -588,8 +505,7 @@ if __name__=='__main__':
     rebin = 5
     lumi = 2500.#36814.
     bfname = '/shome/dschafer/AnalysisOutput/80X/Bkg/Summer16/QCD_pythia8_VVdijet_SR.root'
-    hnames = 'Tau21_punzi'
-    hnameb = ['Tau21_punzi1TeV','Tau21_punzi1v2TeV','Tau21_punzi1v6TeV','Tau21_punzi1v8TeV','Tau21_punzi2TeV','Tau21_punzi2v5TeV','Tau21_punzi3TeV','Tau21_punzi4TeV']
+
     fbkg = TFile.Open(bfname,"READ")
     dhnamesb = {'1000' : 'Tau21_punzi1TeV', '1200' : 'Tau21_punzi1v2TeV', '1600' : 'Tau21_punzi1v6TeV', '1800' : 'Tau21_punzi1v8TeV', '2000' : 'Tau21_punzi2TeV', '2500' : 'Tau21_punzi2v5TeV','3000' : 'Tau21_punzi3TeV', '4000' : 'Tau21_punzi4TeV'}
     #orig_stdout = sys.stdout
@@ -610,18 +526,16 @@ if __name__=='__main__':
 
 
     masses = [1,1.2,2,2.5,3]
-    
+    cat = "VVLP"
     filelist = getSigFileList(masses,prefix)
-    maxpunzi = getPunziGraphs(masses, filelist[0],filelist[1] ,dhnamesb, hnames, lumi, fbkg,outdir,rebin)
+    maxpunzi = getPunziGraphs(cat, masses, filelist[0],filelist[1] , lumi, fbkg,outdir,rebin)
     
     
     
     #Signal="Zprime"
     #masses = [1,1.2,1.4,1.8,2,3,3.5,4]
     #filelist = getSigFileList(masses,prefix)
-    
-    
-    #maxpunzi = getPunziGraphs(masses,filelist[0],filelist[1] ,dhnamesb, hnames, lumi, fbkg,outdir,rebin)
+    #maxpunzi = getPunziGraphs(masses,filelist[0],filelist[1] , lumi, fbkg,outdir,rebin)
     
     #Signal="Wprime"
     #masses = [1,1.2,1.4,1.8,2,3,3.5,4]
