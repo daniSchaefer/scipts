@@ -11,9 +11,10 @@ import array
 
 #set the tdr style
 tdrstyle.setTDRStyle()
-#gRoot.SetBatch(kTrue)
+#gROOT.SetBatch(True)
 #change the CMS_lumi variables (see CMS_lumi.py)
-CMS_lumi.lumi_13TeV = "36.8 fb^{-1}"
+CMS_lumi.lumi_13TeV = "35.9 fb^{-1}"
+#CMS_lumi.lumi_13TeV = "run B"
 CMS_lumi.writeExtraText = 1
 CMS_lumi.extraText = "Preliminary"
 CMS_lumi.lumi_sqrtS = "13 TeV" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
@@ -107,8 +108,9 @@ config.read(opts.config)
 
 prefix = config.get('StackPlots','prefix')
 files = eval(config.get('StackPlots','filelist'))
+filelistMinorBkg = eval(config.get('StackPlots','filelistMinorBkg'))
 lumi = config.getfloat('StackPlots','lumi')
-data = config.get('StackPlots','data')
+data = eval(config.get('StackPlots','data'))
 signal = eval(config.get('StackPlots','signal'))
 histos = eval(config.get('StackPlots','histos'))
 bkgname = eval(config.get('StackPlots','bkg'))
@@ -134,8 +136,10 @@ print "Histos : "
 print histos
 
 filelist = []
+filelistMBkg =[]
 #test :
 histolist=[]
+histolistMBkg = []
 
 for f in files:
    filename = prefix + "/" + f
@@ -144,6 +148,17 @@ for f in files:
    print "is file opened : "+str(filetmp)
    print htmp.Integral()
    filelist.append(filetmp)
+   
+for f in filelistMinorBkg:
+    if f!="":
+        filename = prefix +"/"+f
+        filetmp = TFile.Open(filename,"READ") 
+        htmp = TH1F(filetmp.Get(histos[0]))
+        print "is file opened : "+str(filetmp)
+        print htmp.Integral()
+        filelistMBkg.append(filetmp)
+        
+    
 
 filelistSIG = []      
 if signal != "":
@@ -153,8 +168,10 @@ if signal != "":
      filetmp = TFile.Open(filename,"READ") 
      filelistSIG.append(filetmp)
 
-if data != "":
-   file_data = TFile.Open(prefix+"/"+data,"READ")
+if data[0] != "":
+   file_data = TFile.Open(prefix+"/"+data[0],"READ")
+   if len(data)>1:
+      file_data2 = TFile.Open(prefix+"/"+data[1],"READ")
 
 lineStyle = [1,2,3,9,1,2,1,1,1]
 markerStyle = [20,22,33,46]
@@ -182,7 +199,7 @@ for h in histos:
    
    l = TLegend(0.515383,0.4644522,0.7538201,0.8869464,"","NDC")
    # l.SetNColumns(2)
-   l.SetTextSize(0.038)
+   l.SetTextSize(0.042)
    l.SetLineColor(0)
    l.SetShadowColor(0)
    l.SetLineStyle(1)
@@ -192,7 +209,7 @@ for h in histos:
    l.SetMargin(0.35)
    l.SetTextAlign(12)
              
-   if data != "":  
+   if data[0] != "":  
       h_data = TH1F(file_data.Get(h)) 
       h_data.Rebin(rebin)   
       h_data.SetLineColor(kBlack)
@@ -202,6 +219,16 @@ for h in histos:
       h_data.SetMarkerSize(1.);
       dataevents = h_data.Integral()
       l.AddEntry(h_data,"CMS Data","Ple")
+      if len(data)>1:
+            h_data2 = TH1F(file_data2.Get(h)) 
+            h_data2.Rebin(rebin)   
+            h_data2.SetLineColor(kRed);
+            h_data2.SetMarkerColor(kRed);
+            h_data2.SetMarkerStyle(20);
+            h_data2.SetMarkerSize(0.5);
+            l.AddEntry(h_data2,"CMS Data Rerereco","Ple")
+      
+      
    
    if signal != "":
       histolistSIG = []   
@@ -230,13 +257,24 @@ for h in histos:
   
      
    histolist = [] 
+   histolistMBkg = []
    print "lenghts file list : "+str(len(filelist))
    for f in xrange(0,len(filelist)):
-        histolist.append(TH1F(filelist[f].Get(h)))
-
+            histolist.append(TH1F(filelist[f].Get(h)))
+        
+   for fm in xrange(0,len(filelistMBkg)):
+       histolistMBkg.append(TH1F(filelistMBkg[fm].Get(h)))
+   for j in range(0,len(histolistMBkg)):
+       histolistMBkg[j].Scale(lumi)
+       histolistMBkg[j].Rebin(rebin)
+       histolistMBkg[j].SetFillColor(kGreen+3)
+       l.AddEntry(histolistMBkg[j],"W+jets","flp")
    for j in range(0,len(histolist)):
-     histolist[j].Scale(lumi)
-     print lumi
+     if lumi!=0:
+        histolist[j].Scale(lumi)
+        print lumi
+     else:
+         print "don't scale to lumi"
      histolist[j].SetName("hist%i"%j) 
      histolist[j].Rebin(rebin) 
      histolist[j].SetLineColor( col.GetColor(palette[j+6]))
@@ -250,7 +288,10 @@ for h in histos:
         print "DATA = %i" %h_data.Integral()
         diff = h_data.Integral()-histolist[j].Integral()
         sf = h_data.Integral()/histolist[j].Integral()
-        histolist[j].Scale(sf)
+        if lumi!=0:
+            histolist[j].Scale(sf)
+        else:
+            print " don't scale to data "
         error = sf*math.sqrt( (1./h_data.Integral()) + (1./histolist[j].Integral()) )    
         print "DATA/MC scalefactor = %f +- %f" %(sf,error)
 
@@ -294,21 +335,23 @@ for h in histos:
    p11_1.SetTopMargin( T/H )
    # p11_1.SetBottomMargin( B/H )
    
-   addInfo = TPaveText(0.6986976,0.3236208,0.9512358,0.4620241,"NDC")
-   if not h.find("PrunedMass_afterTau21") != -1 and (h.find("chf") != -1 or h.find("Tau21") != -1 or h.find("tau2tau1") != -1 or h.find("tau3tau1") != -1  or h.find("tau3tau2") !=-1 or h.find("DeltaEta") != -1): addInfo = TPaveText(0.17051072,0.3897145,0.2576454,0.5281177,"NDC")
+   addInfo = TPaveText(0.6186976,0.3236208,0.9512358,0.4620241,"NDC")
+   #addInfo = TPaveText(0.61,0.32,0.55,0.56,"NDC")
+   if not h.find("PrunedMass_afterTau21") != -1 and (h.find("chf") != -1 or h.find("Tau21") != -1 or h.find("tau2tau1") != -1 or h.find("tau3tau1") != -1  or h.find("tau3tau2") !=-1 or h.find("DeltaEta") != -1): addInfo = TPaveText(0.13,0.40,0.53,0.65,"NDC") #addInfo = TPaveText(0.17051072,0.3897145,0.2576454,0.5281177,"NDC")
   
    # addInfo.AddText("AK8CHSPF jets")
-   if h.find("punzi") != -1 or h.find("afterPUPPISoftdropMass") != -1  or h.find("afterPrunedMass") !=-1 : addInfo.AddText("65 GeV < M_{G} #leq 105 GeV")
+   if h.find("punzi") != -1 or h.find("afterPUPPISoftdropMass") != -1  or h.find("afterPrunedMass") !=-1 : addInfo.AddText("65 GeV < M_{j} #leq 105 GeV")
    if files[0].find("pt1000") != -1: addInfo.AddText("|#eta| < 2.5, p_{T} > 1 TeV")
    else : addInfo.AddText("|#eta| < 2.5, p_{T} > 200 GeV")
-   if h.find("afterTau21") != -1: addInfo.AddText("#tau_{21} #leq 40")
-   addInfo.AddText("M_{jj} > 1055 GeV, |#Delta#eta_{jj}| < 1.3")
+   if h.find("afterTau21") != -1: addInfo.AddText("#tau_{21} #leq 0.35")
+   addInfo.AddText("M_{jj} > 1050 GeV, |#Delta#eta_{jj}| < 1.3")
    addInfo.SetFillColor(0)
    addInfo.SetLineColor(0)
    addInfo.SetFillStyle(0)
    addInfo.SetBorderSize(0)
    addInfo.SetTextFont(42)
-   addInfo.SetTextSize(0.040)
+   addInfo.SetTextSize(0.060)
+   #addInfo.SetMargin(0.5)
    addInfo.SetTextAlign(12)
    
    if h.find("SoftdropMass") != -1 :
@@ -356,15 +399,34 @@ for h in histos:
    vFrame.GetYaxis().SetTitleSize(0.06)
    vFrame.GetYaxis().SetTitleOffset(1.0)
 
+   if len(histolistMBkg) ==0:
+        
+        for hist in histolist:
+            hist.Draw("HISTsame") 
+   else:
+       print len(histolist)
+       #for k in range(0,len(histolist)-1):
+       #print hist
+       hstack = THStack()
+       hist = histolist[0]
+       hstack.Add(histolist[0])
+       #print len(histolistMBkg)
+       for htmp in histolistMBkg:
+       #   print "is in htmpBKg loop"
+            hstack.Add(htmp)
+       print "draw stack of "
+       hstack.Draw("HISTsame")
    for hist in histolist:
-     hist.Draw("HISTsame") 
+        hist.Draw("HISTsame")            
    if signal != "":
      for h_signal in histolistSIG:
        h_signal.Draw("HISTsame")
      # for h_signal in fits:
  #       h_signal.Draw("Csame")
-     if data != "":
+     if data[0] != "":
        h_data.Draw("samePE")
+       if len(data)>1:
+           h_data2.Draw("samePE")
 
    l.Draw("same")
   
@@ -415,15 +477,35 @@ for h in histos:
       
       pulls =[]
       j = -1
-      for hsum in histolist:
-        j += 1
-        rh = get_ratio(h_data,hsum)
-        rh.SetName(hsum.GetName())
-        rh.SetMarkerColor( col.GetColor(palette[j+6]))
-        rh.SetMarkerStyle( markerStyle[j])
-        pulls.append(rh)
+      
+      if len(histolistMBkg) ==0:
+        for hsum in histolist:
+              j += 1
+              rh = get_ratio(h_data,hsum)
+              rh.SetName(hsum.GetName())
+              rh.SetMarkerColor( col.GetColor(palette[j+6]))
+              rh.SetMarkerStyle( markerStyle[j])
+              pulls.append(rh)
+            
+     
+      else:
+            print len(histolist)
+            for k in range(0,len(histolist)):
+                #print hist
+                hist = histolist[k]
+                hadd = hist.Clone("hadd")
+                #print len(histolistMBkg)
+                for htmp in histolistMBkg:
+                #   print "is in htmpBKg loop"
+                    hadd.Add(htmp)
+                j += 1
+                rh = get_ratio(h_data,hadd)
+                rh.SetName(hadd.GetName())
+                rh.SetMarkerColor( col.GetColor(palette[j+6]))
+                rh.SetMarkerStyle( markerStyle[j])
+                pulls.append(rh)
       for pull in pulls:  
-        pull.Draw("same")
+            pull.Draw("same")
       li = get_line(h_data.GetXaxis().GetXmin(),h_data.GetXaxis().GetXmax(),1,1)
       if h.find("Mjj") != -1 :li = get_line(1000,h_data.GetXaxis().GetXmax(),1,1)
       li.Draw("same")

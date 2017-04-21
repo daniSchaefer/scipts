@@ -45,8 +45,11 @@ def getSigFileList(masses,prefix):
     for m in masses:
         if Signal=="Wprime":
             sigfiles.append('ExoDiBosonAnalysis.'+Signal+'WZ_13TeV_'+str(int(1000*m))+'GeV.VV.root')
-        else:
-            sigfiles.append('ExoDiBosonAnalysis.'+Signal+'WW_13TeV_'+str(int(1000*m))+'GeV.VV.root')
+        elif Signal.find("Qstar")==-1:
+            sigfiles.append('ExoDiBosonAnalysis.'+Signal+'_13TeV_'+str(int(1000*m))+'GeV.VV.root')
+        elif Signal.find("Qstar")!=-1:
+           sigfiles.append('ExoDiBosonAnalysis.'+Signal+'_13TeV_'+str(int(1000*m))+'GeV.qV.root') 
+        
 
     sigfilelist = []  
     for sigf in sigfiles:
@@ -77,9 +80,12 @@ def getPunzi2(fsig,fbkg,massup,massdown,category):
     #print testcuts
     ressig = getNevents(fsig, testcuts, massup, massdown,category)
     resbkg = getNevents(fbkg, testcuts, massup, massdown,category)
+    print ressig
+    print resbkg
     denBKG = resbkg[0]
     denSIG = ressig[0]
     es = []
+    
     for s in range(1,len(ressig)):
         es = ressig[s]/denSIG
         eb = resbkg[s]/denBKG
@@ -161,6 +167,7 @@ def getPunziGraphs(category, masses,sigfilelist,filenames , lumi, fbkg,outdir,re
         i = 0
         
         r = getPunzi2(file,fbkg,mass*1.2,mass*0.8,category)
+    
         maxpunzi.append(r['maxvalue'])
         maxcuts.append(r['maxcut'])
         maxcutsup.append(r['maxcut']*1.1)
@@ -248,16 +255,28 @@ def getPunziGraphs(category, masses,sigfilelist,filenames , lumi, fbkg,outdir,re
     cut055punziRatio = array('d',[])
     cut06punziRatio = array('d',[])
     cut075punziRatio = array('d',[])
-    for i in range (0,len(maxpunzi)):
-        cut040punziRatio.append(cut040punzi[i]/maxpunzi[i])
-        cut045punziRatio.append(cut045punzi[i]/maxpunzi[i])
-        cut05punziRatio.append(cut05punzi[i]/maxpunzi[i])
-        cut055punziRatio.append(cut055punzi[i]/maxpunzi[i])
-        cut06punziRatio.append(cut06punzi[i]/maxpunzi[i])
-        cut075punziRatio.append(cut075punzi[i]/maxpunzi[i])
-        cut030punziRatio.append(cut030punzi[i]/maxpunzi[i])
-        cut035punziRatio.append(cut035punzi[i]/maxpunzi[i])
-  
+    if category.find("HP")!=-1:
+        for i in range (0,len(maxpunzi)):
+            cut040punziRatio.append(cut040punzi[i]/maxpunzi[i])
+            cut045punziRatio.append(cut045punzi[i]/maxpunzi[i])
+            cut05punziRatio.append(cut05punzi[i]/maxpunzi[i])
+            cut055punziRatio.append(cut055punzi[i]/maxpunzi[i])
+            cut06punziRatio.append(cut06punzi[i]/maxpunzi[i])
+            cut075punziRatio.append(cut075punzi[i]/maxpunzi[i])
+            cut030punziRatio.append(cut030punzi[i]/maxpunzi[i])
+            cut035punziRatio.append(cut035punzi[i]/maxpunzi[i])
+    else:
+        for i in range(0,len(masses)):
+            rhp = getPunzi2(file,fbkg,mass*1.2,mass*0.8,"HP")
+            cut040punziRatio.append(cut040punzi[i]/rhp["maxvalue"])
+            cut045punziRatio.append(cut045punzi[i]/rhp['maxvalue'])
+            cut05punziRatio.append(cut05punzi[i]/  rhp['maxvalue'])
+            cut055punziRatio.append(cut055punzi[i]/rhp['maxvalue'])
+            cut06punziRatio.append(cut06punzi[i]/  rhp['maxvalue'])
+            cut075punziRatio.append(cut075punzi[i]/rhp['maxvalue'])
+            cut030punziRatio.append(cut030punzi[i]/rhp['maxvalue'])
+            cut035punziRatio.append(cut035punzi[i]/rhp['maxvalue'])
+        
   
     print "maxpunzi: ===================================================="
     print maxpunzi
@@ -283,15 +302,17 @@ def getPunziGraphs(category, masses,sigfilelist,filenames , lumi, fbkg,outdir,re
     gup = TGraph(len(maxcuts), maxmass,maxcutsup)
     gdown = TGraph(len(maxcuts), maxmass,maxcutsdown)
     g.SetLineWidth(2)
-    g.GetXaxis().SetTitle('M_{X} (TeV)')
-    g.GetYaxis().SetTitle("Optimal cut")
+    gr10perBand.GetXaxis().SetTitle('M_{X} (TeV)')
+    gr10perBand.GetYaxis().SetTitle("Optimal cut")
+    gr10perBand.GetXaxis().SetNdivisions(4) 
     g.SetMarkerStyle(22)
     g.SetMarkerSize(3)
     g.SetMarkerColor(kRed-3)
     g.GetYaxis().SetRangeUser(0.,1.)
     l2.SetFillColor(0)
-    if not Signal=="Wprime":l2.AddEntry(g,"G_{%s}: Optimal #tau_{21} cut"%Signal,"p")
-    if Signal=="Wprime":l2.AddEntry(g,"W': Optimal #tau_{21} cut","p")
+    if not (Signal.find("Wprime")!=-1 or Signal.find("Zprime")!=-1):l2.AddEntry(g,"G_{%s}: Optimal #tau_{21} cut"%Signal,"p")
+    if Signal.find("Wprime")!=-1:l2.AddEntry(g,"W': Optimal #tau_{21} cut","p")
+    if Signal.find("Zprime")!=-1:l2.AddEntry(g,"Z': Optimal #tau_{21} cut","p")
     # l2.AddEntry(0,"[1] Bulk G#rightarrow WW: %.1f" %(maxcuts[0]),"")
     # l2.AddEntry(0,"[2] RS1 G#rightarrow WW: %.1f" %(maxcuts[1]),"")
     # l2.AddEntry(0,"[3] RS1 G#rightarrow ZZ: %.1f" %(maxcuts[2]),"")
@@ -344,6 +365,7 @@ def getPunziGraphs(category, masses,sigfilelist,filenames , lumi, fbkg,outdir,re
     
     
     g2.GetXaxis().SetTitle('M_{X} (TeV)')
+    g2.GetXaxis().SetNdivisions(4)
     # g2.GetYaxis().SetTitle("#epsilon_{S}/(1+#sqrt{B})")
     g2.GetYaxis().SetTitle("Sign / Sign_{Opt. cut}")
     g2.GetYaxis().SetRangeUser(0.0,1.5)
@@ -420,7 +442,221 @@ def getPunziGraphs(category, masses,sigfilelist,filenames , lumi, fbkg,outdir,re
 
     time.sleep(10)
     return maxpunzi
+ 
+ 
+def plotHPplusLP(masses,sigfilelist,filenames , lumi, fbkg,outdir): 
+        
+    ii = 0
+    maxmass = array('d',[])
+    maxpunzi = array('d',[])
+    maxcuts = array('d',[])
+    maxcutsup = array('d',[])
+    maxcutsdown = array('d',[])
+    maxes = array('d',[])
+    maxB = array('d',[])
+
+    cut075punzi = array('d',[])
+    cut075 = array('d',[])
+
+    cut06punzi = array('d',[])
+    cut06 = array('d',[])
+
+    cut05punzi = array('d',[])
+    cut05 = array('d',[])
+
+    cut055punzi = array('d',[])
+    cut055 = array('d',[])
+
+    cut045  = array('d',[])
+    cut045punzi = array('d',[])
+
+    cut040  = array('d',[])
+    cut040punzi = array('d',[])
+
+    cut030  = array('d',[])
+    cut030punzi = array('d',[])
+
+    cut035  = array('d',[])
+    cut035punzi = array('d',[])
+    for file in sigfilelist:
+        m = masses[ii]
+        mass = m*1000
+        print 'Mass set to %i' %mass
+        punzi = array('d',[])
+        cuts = array('d',[])
+        ES = array('d',[])
+        B = array('d',[])
+        i = 0
+        r ={}
+        rlp ={}
+        if Signal.find("Qstar")==-1:
+            r = getPunzi2(file,fbkg,mass*1.2,mass*0.8,"VVHP")
+            rlp = getPunzi2(file,fbkg,mass*1.2,mass*0.8,"VVLP")
+        else:
+            r = getPunzi2(file,fbkg,mass*1.2,mass*0.8,"qVHP")
+            rlp = getPunzi2(file,fbkg,mass*1.2,mass*0.8,"qVLP")
+            
+        maxmass.append(mass)
+        ii+=1
+        ListOfcuts = [75,60,50,55,45,40,35,30]
+        ind = 0
+        for x in ListOfcuts:
+            ind +=1
+            pshp = r[x]
+            pslp = rlp[x]
+            ps = pshp+pslp
+            cut = x/100.
+            if (x==75):
+                cut075punzi.append(ps)  
+                cut075.append(cut)
+            if (x==60):
+                cut06punzi.append(ps)  
+                cut06.append(cut)  
+            if (x==55):
+                cut055punzi.append(ps)  
+                cut055.append(cut)
+            if (x==50):
+                cut05punzi.append(ps)  
+                cut05.append(cut)    
+            if (x==45):
+                cut045punzi.append(ps)  
+                cut045.append(cut)  
+            if (x==40):
+                cut040punzi.append(ps)  
+                cut040.append(cut)  
+            if (x==30):
+                cut030punzi.append(ps)  
+                cut030.append(cut)  
+            if (x==35):
+                cut035punzi.append(ps)  
+                cut035.append(cut)  
+        del punzi[:]
+        del cuts[:]
+        del ES[:]
+        del B[:]
     
+    
+
+    l1 = TLatex()
+    l1.SetNDC()
+    l1.SetTextAlign(12)
+
+    c2 = TCanvas("c2", "",800,800)
+    c2.cd()
+    #c2.SetGridx()
+    #c2.SetGridy()
+    
+    l1.SetTextFont(42)
+    l1.SetTextSize(0.031)
+    l1.DrawLatex(0.6,0.81, "0.8 #times M_{X} < M_{jj} < 1.2 #times M_{X}")
+    l1.DrawLatex(0.6,0.77, "65 GeV < M_{p} < 105 GeV")
+    CMS_lumi.CMS_lumi(c2, iPeriod, iPos)
+    c2.Update()
+
+    # l3 = TLegend(.2,.6,.4,.8)
+    l3 = TLegend(.2,.7,.4,.9)
+    l3.SetBorderSize(0)
+    l3.SetFillColor(0)
+    l3.SetTextFont(42)
+    l3.SetTextSize(0.035)
+    c3 = TCanvas("c3", "",800,800)
+    c3.cd()
+    c3.SetGridx()
+    c3.SetGridy()
+
+    g2 = TGraph(len(cut05), maxmass,  cut05punzi)
+    g3 = TGraph(len(cut055),maxmass ,cut055punzi)
+    g4 = TGraph(len(cut06), maxmass,  cut06punzi)
+    g5 = TGraph(len(cut075), maxmass,cut075punzi)
+    g6 = TGraph(len(cut045), maxmass,cut045punzi)
+    g7 = TGraph(len(cut040), maxmass,cut040punzi)
+    g8 = TGraph(len(cut035), maxmass,cut035punzi)
+    g9 = TGraph(len(cut030), maxmass,cut030punzi)
+    
+    g2.SetLineWidth(2)
+    g3.SetLineWidth(2)
+    g4.SetLineWidth(2)
+    g5.SetLineWidth(2)
+    g6.SetLineWidth(2)
+    g7.SetLineWidth(2)
+    g8.SetLineWidth(2)
+    g9.SetLineWidth(2)
+    
+    
+    g2.GetXaxis().SetTitle('M_{X} (TeV)')
+    # g2.GetYaxis().SetTitle("#epsilon_{S}/(1+#sqrt{B})")
+    g2.GetYaxis().SetTitle("Sign")
+    g2.GetXaxis().SetNdivisions(5)
+    g2.GetYaxis().SetRangeUser(0.0,1.0)
+    if Signal.find("BulkZZ")!=-1:
+        g2.GetYaxis().SetRangeUser(0.0,0.5)
+    if Signal.find("Qstar")!=-1:
+        g2.GetYaxis().SetRangeUser(0.0,1.0)
+    #g2.SetNdivisions(4)
+    g2.SetMarkerColor(col.GetColor(palette[0]))
+    g3.SetMarkerColor(col.GetColor(palette[1]))
+    g4.SetMarkerColor(col.GetColor(palette[2]))
+    g5.SetMarkerColor(col.GetColor(palette[3]))
+    g7.SetMarkerColor(col.GetColor(palette[4]))
+    g8.SetMarkerColor(col.GetColor(palette[5]))
+    g9.SetMarkerColor(col.GetColor(palette[6]))
+    
+    g2.SetLineColor(col.GetColor(palette[0]))
+    g3.SetLineColor(col.GetColor(palette[1]))
+    g4.SetLineColor(col.GetColor(palette[2]))
+    g5.SetLineColor(col.GetColor(palette[3]))
+    g7.SetLineColor(col.GetColor(palette[4]))
+    g8.SetLineColor(col.GetColor(palette[5]))
+    g9.SetLineColor(col.GetColor(palette[6]))
+    g2.SetMarkerStyle(markerStyles[0])
+    g3.SetMarkerStyle(markerStyles[1])
+    g4.SetMarkerStyle(markerStyles[2])
+    g5.SetMarkerStyle(markerStyles[3])
+    g7.SetMarkerStyle(markerStyles[4])
+    g8.SetMarkerStyle(markerStyles[5])
+    g9.SetMarkerStyle(markerStyles[6])
+    l3.AddEntry(g9,"#tau_{21} < 0.30","p")
+    l3.AddEntry(g8,"#tau_{21} < 0.35","p")
+    l3.AddEntry(g7,"#tau_{21} < 0.40","p")
+    l3.AddEntry(g6,"#tau_{21} < 0.45","p")
+    l3.AddEntry(g2,"#tau_{21} < 0.50","p")
+    l3.AddEntry(g3,"#tau_{21} < 0.55","p")
+    l3.AddEntry(g4,"#tau_{21} < 0.60","p")
+    l3.AddEntry(g5,"#tau_{21} < 0.75","p")
+    g2.Draw("APL")
+    g3.Draw("PLsame")
+    g4.Draw("PLsame")
+    g5.Draw("PLsame")
+    g6.Draw("PLsame")
+    g7.Draw("PLsame")
+    g8.Draw("PLsame")
+    g9.Draw("PLsame")
+    l3.Draw()
+    CMS_lumi.CMS_lumi(c3, iPeriod, iPos)
+    c3.Update()
+    time.sleep(10)
+
+
+
+
+
+    l = TLegend(.59,.62,.80,.9)
+    l.SetBorderSize(0)
+    l.SetFillColor(0)
+    l.SetFillStyle(0)
+    l.SetTextFont(42)
+    l.SetTextSize(0.035)
+
+
+    canvasname =outdir+Signal+"SignvsM_HPplusLP.pdf"
+    c3.Print(canvasname,"pdf")
+    c3.Print(canvasname.replace("pdf","root"),"root")
+    c3.Print(canvasname.replace("pdf","C"),"C")
+    #sys.stdout = orig_stdout
+
+    time.sleep(10)
+    return 0
+
 def plotMaxPunzi(maxpunzi, masses):
     m = array('d',masses)
     g = TGraph(len(masses), m,maxpunzi)
@@ -451,7 +687,11 @@ def plotMaxPunzi(maxpunzi, masses):
     
     
 def getNevents(tfile, cutup, massup, massdown, category):
+    print category
     tree = tfile.Get('tree')
+    print tree
+    print category.find("HP")
+    print category.find("q")
     n = []
     LPcut =0.75
     for cut in cutup:
@@ -472,26 +712,48 @@ def getNevents(tfile, cutup, massup, massdown, category):
                 #continue
             #if event.jet_puppi_tau2tau1_jet1 > cutup or event.jet_puppi_tau2tau1_jet1 < cutdown:
                 #continue
+                
             i=0
             for cut in cutup:
+                #print "test"
                 #print cut*0.01
                 x = cut*0.01
-                if category.find("HP")!=-1:
-                    if (event.jet_puppi_tau2tau1_jet2 <= x) and (event.jet_puppi_tau2tau1_jet1 <= x):
-                        n[i]+= event.weight
-                        #print event.jet_puppi_tau2tau1_jet1
-                        #print event.jet_puppi_tau2tau1_jet2
-                else:
-                    if x >= 0.75:
-                       if x == 1.:
-                           n[i]+=event.weight
-                       else:
-                           continue
-                    else:
-                        if ((event.jet_puppi_tau2tau1_jet2 <= x) and (x < event.jet_puppi_tau2tau1_jet1 <= LPcut)) or ((event.jet_puppi_tau2tau1_jet1 <= x) and (x < event.jet_puppi_tau2tau1_jet2 <= LPcut)):
+                if category.find("q")==-1:
+                    if category.find("HP")!=-1:
+                        if (event.jet_puppi_tau2tau1_jet2 <= x) and (event.jet_puppi_tau2tau1_jet1 <= x):
                             n[i]+= event.weight
+                            #print event.weight
+                            #print event.jet_puppi_tau2tau1_jet1
+                            #print event.jet_puppi_tau2tau1_jet2
+                    else:
+                        if x >= 0.75:
+                            if x == 1.:
+                                n[i]+=event.weight
+                            else:
+                                continue
+                        else:
+                            if ((event.jet_puppi_tau2tau1_jet2 <= x) and (x < event.jet_puppi_tau2tau1_jet1 <= LPcut)) or ((event.jet_puppi_tau2tau1_jet1 <= x) and (x < event.jet_puppi_tau2tau1_jet2 <= LPcut)):
+                                n[i]+= event.weight
                     
                 i+=1
+        else:
+            j = 0
+            for cut in cutup:
+                HPcut = cut*0.01
+                if category.find("HP")!=-1:
+                    if ( (65. <= event.jet_puppi_softdrop_jet2 <= 105. and event.jet_puppi_tau2tau1_jet2 <= HPcut) or (65. <= event.jet_puppi_softdrop_jet1 <= 105. and event.jet_puppi_tau2tau1_jet1 <= HPcut)):
+                        n[j]+=event.weight
+                elif category.find("LP")!=-1:
+                    if HPcut>= LPcut:
+                        if HPcut == 1.:
+                            n[j]+=event.weight
+                        else:
+                            continue
+                    if ( (65. <= event.jet_puppi_softdrop_jet2 <= 105. and (HPcut < event.jet_puppi_tau2tau1_jet2 <= LPcut)) or (65. <= event.jet_puppi_softdrop_jet1 <= 105. and ( HPcut < event.jet_puppi_tau2tau1_jet1 <= LPcut))):
+                        n[j]+=event.weight
+                    
+                j+=1
+
 
     return n
 
@@ -499,46 +761,37 @@ def getNevents(tfile, cutup, massup, massdown, category):
 if __name__=='__main__':
     palette = get_palette('gv')
     col = TColor()
-    Signal="Bulk"
+    Signal="BulkZZ"
     outdir="/shome/dschafer/AnalysisOutput/figures/testTau21Cut/"
     prefix="/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/"
     rebin = 5
-    lumi = 2500.#36814.
-    bfname = '/shome/dschafer/AnalysisOutput/80X/Bkg/Summer16/QCD_pythia8_VVdijet_SR.root'
+    lumi = 35867.
+    bfname = '/shome/dschafer/AnalysisOutput/80X/Bkg/Summer16/QCD_pythia8_VVdijet_SR_JECv2.root'
 
     fbkg = TFile.Open(bfname,"READ")
     dhnamesb = {'1000' : 'Tau21_punzi1TeV', '1200' : 'Tau21_punzi1v2TeV', '1600' : 'Tau21_punzi1v6TeV', '1800' : 'Tau21_punzi1v8TeV', '2000' : 'Tau21_punzi2TeV', '2500' : 'Tau21_punzi2v5TeV','3000' : 'Tau21_punzi3TeV', '4000' : 'Tau21_punzi4TeV'}
-    #orig_stdout = sys.stdout
-    #f = file(outdir+Signal+'WW.txt', 'w')
-    #sys.stdout = f
 
-    #masses= [1.2]
+
+    #Signal = "QstarQW"
+    #masses = [1.2,2,2.5,3,4,5,6,7]
+    #cat = "qVHP"
     #filelist = getSigFileList(masses,prefix)
-    #bkgfile  = TFile.Open(bfname,"READ") 
-    #for file in filelist:
-        #sigh = file[0].Get('Tau21_punzi1v2TeV')
-        #bkgh = bkgfile.Get('Tau21_punzi1v2TeV')
-        #denSig = sigh.Integral()
-        #denBKG = bkgh.Integral()
-        #getMaxPunzi(sigh,bkgh,denSig,denBKG)
-        #time.sleep(20)
-
-
-
-    masses = [1,1.2,2,2.5,3]
-    cat = "VVLP"
+    #maxpunzi = getPunziGraphs(cat, masses, filelist[0],filelist[1] , lumi, fbkg,outdir,rebin)
+    ##plotHPplusLP( masses,filelist[0],filelist[1] , lumi, fbkg,outdir)
+    
+    
+    
+    Signal="BulkZZ"
+    cat = "VVHP"
+    masses = [1.2,1.4,1.8,2,3,3.5,4]
     filelist = getSigFileList(masses,prefix)
-    maxpunzi = getPunziGraphs(cat, masses, filelist[0],filelist[1] , lumi, fbkg,outdir,rebin)
-    
-    
+    #maxpunzi = getPunziGraphs(cat, masses, filelist[0],filelist[1] , lumi, fbkg,outdir,rebin)
+    plotHPplusLP( masses,filelist[0],filelist[1] , lumi, fbkg,outdir)
     
     #Signal="Zprime"
-    #masses = [1,1.2,1.4,1.8,2,3,3.5,4]
+    #cat = "VVHP"
+    #masses = [1,1.2,1.4,1.8,2,3,3.5,4,4.5]
     #filelist = getSigFileList(masses,prefix)
-    #maxpunzi = getPunziGraphs(masses,filelist[0],filelist[1] , lumi, fbkg,outdir,rebin)
-    
-    #Signal="Wprime"
-    #masses = [1,1.2,1.4,1.8,2,3,3.5,4]
-    #filelist = getSigFileList(masses,prefix)
-    #maxpunzi = getPunziGraphs(masses,filelist, hnameb, hnames, lumi, fbkg,outdir,rebin)
-    
+    ##maxpunzi = getPunziGraphs(cat, masses, filelist[0],filelist[1] , lumi, fbkg,outdir,rebin)
+    #plotHPplusLP( masses,filelist[0],filelist[1] , lumi, fbkg,outdir)
+ 
