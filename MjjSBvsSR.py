@@ -61,8 +61,8 @@ filename1 = "QCD_madgraph_pythia8_"+channel+"_summer16.root"
 filename2 = "QCD_madgraph_pythia8_"+channel+"_summer16_SB.root"
 
 if options.herwig:
-  filename1 = "QCD_herwig_"+channel+".root"
-  filename2 = "QCD_herwig_"+channel+"_SB.root"
+  filename1 = "QCD_herwig_"+channel+"_summer16.root"
+  filename2 = "QCD_herwig_"+channel+"_summer16_SB.root"
 if options.ptBinned:
   filename1 = "QCD_pythia8_"+channel+".root"
   filename2 = "QCD_pythia8_"+channel+"_SB_test40GeV.root"
@@ -114,7 +114,7 @@ if options.herwig: addInfo.AddText("QCD, Herwig++")
 elif options.ptBinned: addInfo.AddText("QCD, Pythia8")
 else: addInfo.AddText("QCD, Pythia8+Madgraph")
 addInfo.AddText("p_{T} > 200 GeV, |#eta| < 2.5 GeV")
-addInfo.AddText("M_{jj} > 1.055 TeV")
+addInfo.AddText("M_{jj} > 1.070 TeV")
 
 i = -1 
 for h in histos:

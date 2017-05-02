@@ -54,7 +54,7 @@ def get_palette(mode):
  return palette[mode]
 
 
-def plotTH1(filenames, histoname, xlabel, ylabel,legendEntries,palette,linestyle):
+def plotTH1(filenames, histoname, xlabel, ylabel,maximum,legendEntries,palette,linestyle,name,rebin=1.):
     col = TColor() 
     if len(filenames) != len(legendEntries):
         return -1
@@ -90,14 +90,18 @@ def plotTH1(filenames, histoname, xlabel, ylabel,legendEntries,palette,linestyle
     print h
     for i in range(0,len(legendEntries)):
         l.AddEntry(h[i],legendEntries[i], "lp" )
-    h[0].SetMaximum(1000)
+    h[0].SetMaximum(maximum)
     h[0].GetXaxis().SetTitle(xlabel)
     h[0].GetYaxis().SetTitle(ylabel)
+    h[0].Rebin(rebin)
     h[0].Draw()
+    print h[0].Integral()
     for i in range(1,len(h)):
+        h[i].Rebin(rebin)
         h[i].Draw("same")
+        print h[i].Integral()
     l.Draw()
-    canvas.SaveAs("test_cos_theta1.pdf")
+    canvas.SaveAs(name)
     time.sleep(10)
     return 0
     
@@ -110,12 +114,21 @@ if __name__=='__main__':
     palette = get_palette('gv')
     linestyle = [1,2,3,4,1,1,1,1,1]
     
+    ############################## plot cos(theta1) (sensitive to polarisation) ############################################
+    #filenames=["/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.BulkWW_13TeV_1200GeV.PDF.root" , "/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.ZprimeWW_13TeV_1200GeV.VV.root","/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.WprimeWZ_13TeV_1200GeV.VV.root",'/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.QstarQW_13TeV_1200GeV.PDF.root', '/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.QstarQZ_13TeV_1200GeV.PDF.root']
+    #legendEntries=["Bulk Graviton","Zprime","Wprime","QstarQW","QstarQZ"]
+    #histoname="gen_COS_Theta1"
 
-    filenames=["/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.BulkWW_13TeV_1200GeV.PDF.root" , "/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.ZprimeWW_13TeV_1200GeV.VV.root","/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.WprimeWZ_13TeV_1200GeV.VV.root",'/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.QstarQW_13TeV_1200GeV.PDF.root', '/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/test/ExoDiBosonAnalysis.QstarQZ_13TeV_1200GeV.PDF.root']
-    legendEntries=["Bulk Graviton","Zprime","Wprime","QstarQW","QstarQZ"]
-    histoname="gen_COS_Theta1"
-
-    plotTH1(filenames,histoname,"cos(#theta_{1})","events",legendEntries,palette,linestyle)
+    #plotTH1(filenames,histoname,"cos(#theta_{1})","events",legendEntries,palette,linestyle)
+    
+    ############################## plot W+jets and QCD after all selections   ##############################################
+    
+    filenames=["/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/results/QCD_pythia8_qV_summer16.root", "/mnt/t3nfs01/data01/shome/dschafer/ExoDiBosonAnalysis/results/Wjets_qV.root"]
+    legendEntries=["QCD","Wjets"]
+    histoname="DijetMassHighPuriqW"
+    maximum = 800
+    rebin=100
+    plotTH1(filenames,histoname,"m_{jj}","events",maximum,legendEntries,palette,linestyle,"plotBkg_qWHP.pdf",rebin)
 
 
 
