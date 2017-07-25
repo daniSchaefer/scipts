@@ -16,7 +16,7 @@ tdrstyle.setTDRStyle()
 CMS_lumi.lumi_13TeV = "35.9 fb^{-1}"
 #CMS_lumi.lumi_13TeV = "run B"
 CMS_lumi.writeExtraText = 1
-CMS_lumi.extraText = "Preliminary"
+CMS_lumi.extraText = ""#"Preliminary"
 CMS_lumi.lumi_sqrtS = "13 TeV" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
 
 iPos = 11
@@ -197,7 +197,7 @@ for h in histos:
    sysunc = []
    statunc = []
    
-   l = TLegend(0.515383,0.4644522,0.7538201,0.8869464,"","NDC")
+   l = TLegend(0.615383,0.4644522,0.8538201,0.8869464,"","NDC")
    # l.SetNColumns(2)
    l.SetTextSize(0.042)
    l.SetLineColor(0)
@@ -218,7 +218,7 @@ for h in histos:
       h_data.SetMarkerStyle(20);
       h_data.SetMarkerSize(1.);
       dataevents = h_data.Integral()
-      l.AddEntry(h_data,"CMS Data","Ple")
+      l.AddEntry(h_data,"Data","Ple")
       if len(data)>1:
             h_data2 = TH1F(file_data2.Get(h)) 
             h_data2.Rebin(rebin)   
@@ -226,7 +226,7 @@ for h in histos:
             h_data2.SetMarkerColor(kRed);
             h_data2.SetMarkerStyle(20);
             h_data2.SetMarkerSize(0.5);
-            l.AddEntry(h_data2,"CMS Data Rerereco","Ple")
+            l.AddEntry(h_data2,"Data Rerereco","Ple")
       
       
    
@@ -267,8 +267,15 @@ for h in histos:
    for j in range(0,len(histolistMBkg)):
        histolistMBkg[j].Scale(lumi)
        histolistMBkg[j].Rebin(rebin)
-       histolistMBkg[j].SetFillColor(kGreen+3)
-       l.AddEntry(histolistMBkg[j],"W+jets","flp")
+       if j==0:
+            histolistMBkg[j].SetFillColor(kGreen+3)
+            histolistMBkg[j].SetLineColor(kGreen+3)
+            l.AddEntry(histolistMBkg[j],"W+jets ","fl")
+       if j==1:
+           #histolistMBkg[j].Scale(14.6/5.67)
+           histolistMBkg[j].SetFillColor(kRed-3)
+           histolistMBkg[j].SetLineColor(kRed-3)
+           l.AddEntry(histolistMBkg[j],"Z+jets ","fl")
    for j in range(0,len(histolist)):
      if lumi!=0:
         histolist[j].Scale(lumi)
@@ -300,6 +307,8 @@ for h in histos:
    nBins = histolist[0].GetXaxis().GetNbins()	
    xAxisTitle = histolist[0].GetXaxis().GetTitle().replace("[GeV]","(GeV)")    
    yTitle = "Events / %.2f" %((xMax-xMin)/nBins)
+   if ((xMax-xMin)/nBins)*100 % 100 == 0:
+       yTitle = "Events / %.0f" %((xMax-xMin)/nBins)
 
    if xAxisTitle.find("GeV") != -1:
       yTitle+=" GeV"
@@ -337,14 +346,14 @@ for h in histos:
    
    addInfo = TPaveText(0.6186976,0.3236208,0.9512358,0.4620241,"NDC")
    #addInfo = TPaveText(0.61,0.32,0.55,0.56,"NDC")
-   if not h.find("PrunedMass_afterTau21") != -1 and (h.find("chf") != -1 or h.find("Tau21") != -1 or h.find("tau2tau1") != -1 or h.find("tau3tau1") != -1  or h.find("tau3tau2") !=-1 or h.find("DeltaEta") != -1): addInfo = TPaveText(0.13,0.40,0.53,0.65,"NDC") #addInfo = TPaveText(0.17051072,0.3897145,0.2576454,0.5281177,"NDC")
+   if not h.find("PrunedMass_afterTau21") != -1 and (h.find("chf") != -1 or h.find("Tau21") != -1 or h.find("tau2tau1") != -1 or h.find("tau3tau1") != -1  or h.find("tau3tau2") !=-1 or h.find("DeltaEta") != -1): addInfo = TPaveText(0.13,0.42,0.55,0.65,"NDC") #addInfo = TPaveText(0.17051072,0.3897145,0.2576454,0.5281177,"NDC")
   
    # addInfo.AddText("AK8CHSPF jets")
-   if h.find("punzi") != -1 or h.find("afterPUPPISoftdropMass") != -1  or h.find("afterPrunedMass") !=-1 : addInfo.AddText("65 GeV < M_{j} #leq 105 GeV")
+   if h.find("punzi") != -1 or h.find("afterPUPPISoftdropMass") != -1  or h.find("afterPrunedMass") !=-1 : addInfo.AddText("65 GeV < m_{j} #leq 105 GeV")
    if files[0].find("pt1000") != -1: addInfo.AddText("|#eta| < 2.5, p_{T} > 1 TeV")
    else : addInfo.AddText("|#eta| < 2.5, p_{T} > 200 GeV")
    if h.find("afterTau21") != -1: addInfo.AddText("#tau_{21} #leq 0.35")
-   addInfo.AddText("M_{jj} > 1050 GeV, |#Delta#eta_{jj}| < 1.3")
+   addInfo.AddText("m_{jj} > 1080 GeV, |#Delta#eta_{jj}| < 1.3")
    addInfo.SetFillColor(0)
    addInfo.SetLineColor(0)
    addInfo.SetFillStyle(0)
@@ -355,7 +364,7 @@ for h in histos:
    addInfo.SetTextAlign(12)
    
    if h.find("SoftdropMass") != -1 :
-     xAxisTitle = "PUPPI + softdrop mass (GeV)"
+     xAxisTitle = "PUPPI + soft-drop mass (GeV)"
    if h.find("afterPUPPISoftdropMass") != -1 :
      xAxisTitle = "PUPPI #tau_{21}"
    if h.find("Tau21_afterPrunedMass") != -1 :
@@ -409,11 +418,12 @@ for h in histos:
        #print hist
        hstack = THStack()
        hist = histolist[0]
-       hstack.Add(histolist[0])
+
        #print len(histolistMBkg)
        for htmp in histolistMBkg:
        #   print "is in htmpBKg loop"
             hstack.Add(htmp)
+       hstack.Add(histolist[0])
        print "draw stack of "
        hstack.Draw("HISTsame")
    for hist in histolist:
@@ -466,11 +476,11 @@ for h in histos:
       vFrame2.SetYTitle("#frac{Data}{MC}")
       vFrame2.GetYaxis().SetTitleSize(0.15)
       vFrame2.GetYaxis().SetTitleOffset(0.350)
-      vFrame2.GetYaxis().SetLabelSize(0.09)
+      vFrame2.GetYaxis().SetLabelSize(0.15)
 
       vFrame2.GetXaxis().SetTitleSize(0.18)
       vFrame2.GetXaxis().SetTitleOffset(0.90)
-      vFrame2.GetXaxis().SetLabelSize(0.12)
+      vFrame2.GetXaxis().SetLabelSize(0.15)
       vFrame2.GetXaxis().SetNdivisions(605)
       vFrame2.GetYaxis().SetNdivisions(504)
       vFrame2.GetYaxis().CenterTitle()

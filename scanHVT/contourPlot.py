@@ -220,10 +220,10 @@ for m in histos.keys():
 
 ##################################################################################   
 colors = {'1000':kAzure+1,'1500':kBlack,'2000':kViolet+7, '3000': kTeal-8, '3500':kGreen+2}
-linestyle = {'1000':1,'1500':8,'2000':1,'3000':7,'3500':1}
+linestyle = {'1000':1,'1500':2,'2000':8,'3000':7,'3500':1}
 lim_text_pos = {'1000':[0.5138191,0.4825175,0.5942211,0.5629371],'1500':[0.4468391,0.485119,0.5948276,0.5550595],
                 '2000':[0.6206897,0.2752976,0.6925287,0.3452381],'3000':[0.6609195,0.7276786,0.7284483,0.797619],'3500':[0.6896552,0.5803571,0.7571839,0.6502976]}
-lim_extra_text = {'1000':'1 TeV','1500':'1.5 TeV','2000':'2 TeV','3000':'3 TeV','3500':'3.5 TeV'}
+lim_extra_text = {'1000':'1 TeV','1500':'1.5 TeV','2000':'2.0 TeV','3000':'3 TeV','3500':'3.5 TeV'}
 #models_text_pos = {'A1':[0.34,0.41,0.40,0.48],'A2':[0.33,0.65,0.39,0.72],'A3':[0.51,0.54,0.57,0.61],'A4':[0.14,0.65,0.20,0.72],'A5':[0.14,0.49,0.20,0.56],'B':[0.1508621,0.54,0.2025862,0.62]}
 #models_point = {'B':[-2.928729,0.13883712988411501],'A1':[-0.9,-0.154917],'A2':[-1,0.4225],'A3':[-0.3,0.14083],'A4':[-3,0.4225],'A5':[-3,0.014083]}
 #models_extra_text = {'A1':'A(g_{V}=1)','A3':'A(g_{V}=3)','B':'B'}
@@ -240,7 +240,7 @@ canv.cd()
 
 mg = ROOT.TMultiGraph("mg","mg")
 
-leg = ROOT.TLegend(0.7083333,0.6517857,0.9181034,0.7827381)
+leg = ROOT.TLegend(0.68,0.6517857,0.9181034,0.745)
 leg.SetBorderSize(0)
 leg.SetShadowColor(0)
 leg.SetFillColor(0)
@@ -262,8 +262,10 @@ for g in g_width['2000']:
    g.RemovePoint(3)
    mg.Add(g)
    idx = idx+1
-      
-for m in obs_lim.keys():
+ 
+
+for m in ['1500','2000','3500']:
+ print m
  i = 0
  for g in g_xsec[m]: 
   g.SetName("gr%i_M%s"%(i,m))
@@ -274,7 +276,8 @@ for m in obs_lim.keys():
   mg.Add(g)
   i+=1
  leg.AddEntry(g,lim_extra_text[m],"L")
-     
+  
+#leg.AddEntry(g_xsec['1500'],lim_extra_text['1500'],"L")
 mg.Draw("AL")   
 mg.GetXaxis().SetTitle("g_{V}c_{H}") 
 mg.GetXaxis().SetRangeUser(-3,3)
@@ -306,10 +309,10 @@ for g in range(len(g_models)):
 
 add_text.append(write_extra_text(width_extra_text[0],width_text_pos,kBlack,'w'))
 
-for t in add_text:
-   t.Draw()
+#for t in add_text:
+ #  t.Draw()
 
-#leg.Draw()
+leg.Draw()
 
        
 #--------------------------------

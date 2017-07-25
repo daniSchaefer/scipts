@@ -1,0 +1,14 @@
+/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_1000GeV.VV.root
+/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_1200GeV.VV.root
+/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_1600GeV.VV.root
+/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_1800GeV.VV.root
+/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_2000GeV.VV.root
+/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_2500GeV.VV.root
+/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_3000GeV.VV.root
+/shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_4000GeV.VV.root
+BKG hist == Tau21_punzi1TeV
+Integral after scaling = 13637.393271
+Signal file == /shome/dschafer/AnalysisOutput/80X/SignalMC/Summer16/ExoDiBosonAnalysis.BulkWW_13TeV_1000GeV.VV.root
+Mass set to 1000
+ALL BKG = 13637.393271
+ALL SIG = 0.156551
